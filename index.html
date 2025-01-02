@@ -3,64 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Simple Webpage</title>
+    <title>Food Stack Game</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            background-color: #87CEEB;
+            overflow: hidden;
         }
-        iframe {
-            border: none;
+        #game-area {
+            position: relative;
+            width: 300px;
+            height: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border: 2px solid #000;
+            overflow-y: auto;
         }
-        .youtube-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
+        #food {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: tomato;
+            border-radius: 5px;
+            animation: moveLeftRight 2s infinite alternate;
         }
-        .youtube-container iframe {
-            width: 48%;
+        #stack {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20px;
+            background-color: #ccc;
         }
-        .section {
-            margin: 20px;
+        .stack-item {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #ffcc00;
+            border-radius: 5px;
+        }
+        #score {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        @keyframes moveLeftRight {
+            from {
+                left: 0;
+            }
+            to {
+                left: 250px;
+            }
+        }
+        #game-over {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            text-align: center;
+            z-index: 10;
+        }
+        #game-over button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <!-- T1 웹사이트 -->
-    <div class="section">
-        <h1>T1 Website</h1>
-        <iframe src="https://www.t1.gg/" width="100%" height="600px" title="T1 Website"></iframe>
-    </div>
+<div id="game-area">
+    <div id="score">Score: 0</div>
+    <div id="food"></div>
+    <div id="stack"></div>
+</div>
 
-    <!-- Google 검색창 -->
-    <div class="section">
-        <h2>Google Search</h2>
-        <form action="https://www.google.com/search" method="get" target="_blank">
-            <input type="text" name="q" placeholder="Search Google..." style="width: 80%; padding: 10px; font-size: 16px;">
-            <button type="submit" style="padding: 10px; font-size: 16px;">Search</button>
-        </form>
-    </div>
+<div id="game-over">
+    <p>Game Over!</p>
+    <button onclick="location.reload()">Restart</button>
+</div>
 
-    <!-- YouTube 동영상 -->
-    <div class="section">
-        <h2>My Favorite YouTube Videos</h2>
-        <div class="youtube-container">
-            <!-- 첫 번째 동영상 -->
-            <iframe 
-                src="https://www.youtube.com/embed/ksmE-xB02NA" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
-            <!-- 두 번째 동영상 -->
-            <iframe 
-                src="https://www.youtube.com/embed/8Q2SrN6J8uc" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
-        </div>
-    </div>
+<script>
+    const gameArea = document.getElementById('game-area');
+    const food = document.getElementById('food');
+    const stack = document.getElementById('stack');
+    const scoreDisplay = document.getElementById('score');
+    const gameOverDisplay = document.getElementById('game-over');
+
+    let score = 0;
+    let stackHeight = 20;
+    let stackBasePosition = null; // Base position for the stack
+    const tolerance = 25; // Allowed deviation for stacking
+
+    // Drop food on space key press
+    document.addEventListener('keydown', (e) => {
+        if (e.key === ' ') {
+            // Get food's current position
+            const foodRect = food.getBoundingClientRect();
+            const foodCenter = foodRect.left + foodRect.width / 2;
+
+            if (stackBasePosition === null) {
+                // First food sets the stack base position
+                stackBasePosition = foodCenter;
+
+                // Add food to the stack
+                addFoodToStack(food.offsetLeft);
+            } else if (Math.abs(foodCenter - stackBasePosition) <= tolerance) {
+                // Food is within tolerance, stack successfully
+                addFoodToStack(food.offsetLeft);
+            } else {
+                // Game Over
+                gameOver();
+            }
+        }
+    });
+
+    function addFoodToStack(leftPosition) {
+        const newFood = document.createElement('div');
+        newFood.classList.add('stack-item');
+        newFood.style.left = `${leftPosition}px`;
+        newFood.style.bottom = `${stackHeight}px`;
+        stack.appendChild(newFood);
+
+        stackHeight += 50; // Increase stack height
+        score++;
+        scoreDisplay.textContent = `Score: ${score}`;
+
+        // Increase speed as score increases
+        if (score % 5 === 0) {
+            const currentSpeed = parseFloat(getComputedStyle(food).animationDuration);
+            food.style.animationDuration = `${Math.max(currentSpeed - 0.2, 0.5)}s`;
+        }
+
+        // Scroll the game area
+        gameArea.scrollTop = stackHeight - 600;
+    }
+
+    function gameOver() {
+        gameOverDisplay.style.display = 'block';
+    }
+</script>
 
 </body>
 </html>
